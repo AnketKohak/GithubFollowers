@@ -14,7 +14,7 @@
 		545F997D2E7562BB004783F6 /* Exceptions for "GithubFollowers" folder in "GithubFollowers" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Info.plist,
+				Support/Info.plist,
 			);
 			target = 545F996A2E7562B9004783F6 /* GithubFollowers */;
 		};
