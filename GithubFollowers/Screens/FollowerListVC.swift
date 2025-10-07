@@ -13,6 +13,8 @@ class FollowerListVC: UIViewController {
     
     var username: String!
     var followers:[Follower] = []
+    var hasMoreFollower = true
+    var page = 1
     
     var collectionView: UICollectionView!
     var dataSource: UICollectionViewDiffableDataSource<Section, Follower>!
@@ -21,7 +23,7 @@ class FollowerListVC: UIViewController {
         super.viewDidLoad()
         configureCollectionView()
         configureViewController()
-        getFollower()
+        getFollower(username: username, page: page)
         configureDataSource()
        
     }
@@ -39,17 +41,20 @@ class FollowerListVC: UIViewController {
     private func configureCollectionView(){
         collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: UIHelper.createThreeColumnFlowLayout(in: view))
         view.addSubview(collectionView)
+        collectionView.delegate = self
         collectionView.backgroundColor = .systemBackground
         collectionView.register(FollowerCell.self, forCellWithReuseIdentifier: FollowerCell.reuseID)
         
     }
     
-    func getFollower(){
-        NetworkManager.shared.getFollowers(for: username, page: 1) {[weak self] result in
+    func getFollower(username : String , page: Int){
+        NetworkManager.shared.getFollowers(for: username, page: page) {[weak self] result in
             guard let self = self else{ return }
             switch result{
+                
             case .success(let followers):
-                self.followers = followers
+                if followers.count < 10 { self.hasMoreFollower = true}
+                self.followers.append(contentsOf: followers)
                 self.updateData()
             case .failure(let error):
                 self.presentGFAlertOnMainThread(title: "Bad Stuff Happend", message: error.rawValue, buttonTitle: "OK")
@@ -69,5 +74,28 @@ class FollowerListVC: UIViewController {
         snapshot.appendSections([.main])
         snapshot.appendItems(followers)
         DispatchQueue.main.async { self.dataSource.apply(snapshot, animatingDifferences: true) }
+    }
+    
+    
+}
+
+extension FollowerListVC: UICollectionViewDelegate{
+    
+//    func scrollViewEndDragging(_ scrollView: UIScrollView, will){
+//
+//    }
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        let offSetY = scrollView.contentOffset.y
+        let contentHeight = scrollView.contentSize.height
+        let height = scrollView.frame.size.height
+        
+        print("Offset : \(offSetY)")
+        print("contentHeight : \(contentHeight)")
+        print("height : \(height)")
+        if offSetY > contentHeight - height {
+            guard hasMoreFollower else { return }
+            page += 1
+            getFollower(username: username, page: page)
+        }
     }
 }
